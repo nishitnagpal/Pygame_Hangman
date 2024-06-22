@@ -1,7 +1,7 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-const WIDTH = 800;
+const WIDTH = 1000;
 const HEIGHT = 600;
 const WORD_WIDTH = 100;
 const WORD_HEIGHT = 10;
