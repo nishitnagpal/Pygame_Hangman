@@ -1,8 +1,8 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-const WIDTH = 1000;
-const HEIGHT = 600;
+const ORIGINAL_WIDTH = 1000;
+const ORIGINAL_HEIGHT = 600;
 const WORD_WIDTH = 100;
 const WORD_HEIGHT = 10;
 const SPACING = 50;
@@ -37,9 +37,24 @@ async function loadWords() {
 
 const FONT = "20px Comic Sans MS";
 
+function resizeCanvas() {
+    const aspectRatio = ORIGINAL_WIDTH / ORIGINAL_HEIGHT;
+    if (window.innerWidth / window.innerHeight > aspectRatio) {
+        canvas.height = window.innerHeight;
+        canvas.width = window.innerHeight * aspectRatio;
+    } else {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerWidth / aspectRatio;
+    }
+    ctx.scale(canvas.width / ORIGINAL_WIDTH, canvas.height / ORIGINAL_HEIGHT);
+}
+
 function drawGame() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(canvas.width / ORIGINAL_WIDTH, canvas.height / ORIGINAL_HEIGHT);
+
     ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    ctx.fillRect(0, 0, ORIGINAL_WIDTH, ORIGINAL_HEIGHT);
 
     if (gameStarted) {
         for (let i = 0; i < dashes.length; i++) {
@@ -64,21 +79,21 @@ function drawGame() {
     }
 
     ctx.fillStyle = 'orange';
-    ctx.fillText(`Attempts: ${attempts}/${MAX_ATTEMPTS}`, WIDTH - 150, 20);
+    ctx.fillText(`Attempts: ${attempts}/${MAX_ATTEMPTS}`, ORIGINAL_WIDTH - 150, 20);
 
     if (!gameStarted && !endMessage && !winMessage) {
-        const startText = "Press Enter to Play\n\n Guess the word in SIX tries\n\n Enter a letter in each try \n\n Press q to Quit";
-        drawMultilineText(startText, FONT, "white", WIDTH / 2, HEIGHT / 3);
+        const startText = "Press Enter to Play\n\n Guess the word in SIX tries\n\n Enter a letter in each try";
+        drawMultilineText(startText, FONT, "white", ORIGINAL_WIDTH / 2, ORIGINAL_HEIGHT / 3);
     }
 
     if (!gameStarted && winMessage) {
-        const winText = `You Won!\n Time Taken: ${Math.round(finalTime)}s \n\n Press Enter to Play Again or q to Quit`;
-        drawMultilineText(winText, FONT, "green", WIDTH / 2, HEIGHT / 3);
+        const winText = `You Won!\n Time Taken: ${Math.round(finalTime)}s \n\n Press Enter to Play Again`;
+        drawMultilineText(winText, FONT, "green", ORIGINAL_WIDTH / 2, ORIGINAL_HEIGHT / 3);
     }
 
     if (!gameStarted && endMessage) {
-        const lostText = `The word was: ${WORD} \n\n Game Over! \n\n You've exceeded the maximum attempts! \n\n Press Enter to Play Again or q to Quit`;
-        drawMultilineText(lostText, FONT, "red", WIDTH / 2, HEIGHT / 3);
+        const lostText = `The word was: ${WORD} \n\n Game Over! \n\n You've exceeded the maximum attempts! \n\n Press Enter to Play Again`;
+        drawMultilineText(lostText, FONT, "red", ORIGINAL_WIDTH / 2, ORIGINAL_HEIGHT / 3);
     }
 
     requestAnimationFrame(drawGame);
@@ -114,11 +129,11 @@ function resetGame() {
 
     dashes = [];
     const totalDashWidth = WORD.length * WORD_WIDTH + (WORD.length - 1) * SPACING;
-    const startX = (WIDTH - totalDashWidth) / 2;
+    const startX = (ORIGINAL_WIDTH - totalDashWidth) / 2;
 
     for (let i = 0; i < WORD.length; i++) {
         const dashX = startX + i * (WORD_WIDTH + SPACING);
-        dashes.push({ x: dashX, y: HEIGHT / 2 });
+        dashes.push({ x: dashX, y: ORIGINAL_HEIGHT / 2 });
     }
 }
 
@@ -157,17 +172,21 @@ function handleInput(event) {
 
 function main() {
     loadWords();
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
     window.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
             if (!gameStarted) {
+                if (endMessage || winMessage) {
+                    resetGame();
+                }
                 gameStarted = true;
                 startTime = Date.now();
             } else if (endMessage || winMessage) {
                 resetGame();
             }
-        } else if (event.key === 'q') {
-            window.close();
+
         } else if (gameStarted && !winMessage) {
             handleInput(event);
         }
